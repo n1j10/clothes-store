@@ -1,0 +1,23 @@
+
+
+export const formatCurrency = (amount:number | null) => {
+
+    const value = amount || 0;
+
+    return new Intl.NumberFormat('en-US',{    
+     
+        style:'currency',
+        currency:'IQD'
+    }).format(value)
+
+
+}
+
+// The API sends dates as ISO strings
+export const formatDate = (date: Date | string) => {
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(new Date(date));
+};
