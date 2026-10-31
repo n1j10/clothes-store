@@ -23,6 +23,9 @@ const TOKEN_COOKIE = "token";
 
 // ================= Helpers =================
 
+// URL-encodes one path segment (ids from forms / action arguments are untrusted).
+const seg = (value: unknown) => encodeURIComponent(String(value ?? ""));
+
 type ApiOptions = Omit<RequestInit, "body"> & {
   body?: BodyInit | object;
   // auth: true => لازم يكون المستخدم مسجل دخول، وإلا يتحول إلى /sign-in
@@ -87,7 +90,11 @@ export const registerAction = async (prevState: any, formData: FormData) => {
   try {
     const { token } = await apiFetch<{ user: User; token: string }>("/users/register", {
       method: "POST",
-      body: Object.fromEntries(formData),
+      body: {
+        name: formData.get("name"),
+        email: formData.get("email"),
+        password: formData.get("password"),
+      },
     });
     await saveToken(token);
   } catch (error) {
@@ -100,7 +107,10 @@ export const loginAction = async (prevState: any, formData: FormData) => {
   try {
     const { token } = await apiFetch<{ user: User; token: string }>("/users/login", {
       method: "POST",
-      body: Object.fromEntries(formData),
+      body: {
+        email: formData.get("email"),
+        password: formData.get("password"),
+      },
     });
     await saveToken(token);
   } catch (error) {
@@ -155,7 +165,7 @@ export const fetchAllProducts = async ({ search = "", category, gender, }: { sea
 };
 
 export const fetchSingleProduct = async (productId: string) =>
-  apiFetch<Product>(`/products/${productId}`);
+  apiFetch<Product>(`/products/${seg(productId)}`);
 
 export const fetchAdminProducts = async () =>
   apiFetch<Product[]>("/products/mine", { auth: true });
@@ -179,7 +189,7 @@ export const createProductAction = async (prevState: any, formData: FormData,): 
 export const updateProductAction = async (prevState: any, formData: FormData) => {
   try {
     const productId = formData.get("id") as string;
-    await apiFetch<Product>(`/products/${productId}`, {
+    await apiFetch<Product>(`/products/${seg(productId)}`, {
       method: "PATCH",
       body: {
         name: formData.get("name"),
@@ -204,7 +214,7 @@ export const updateProductImageAction = async (prevState: any, formData: FormDat
     const productId = formData.get("id") as string;
     const image = new FormData();
     image.set("image", formData.get("image") as File);
-    await apiFetch<Product>(`/products/${productId}/image`, {
+    await apiFetch<Product>(`/products/${seg(productId)}/image`, {
       method: "PATCH",
       body: image,
       auth: true,
@@ -218,7 +228,7 @@ export const updateProductImageAction = async (prevState: any, formData: FormDat
 
 export const deleteProductAction = async (prevState: { productId: string }) => {
   try {
-    await apiFetch<null>(`/products/${prevState.productId}`, {
+    await apiFetch<null>(`/products/${seg(prevState.productId)}`, {
       method: "DELETE",
       auth: true,
     });
@@ -266,7 +276,7 @@ export const updateCartItemAction = async ({ amount, cartItemId, }: {
   cartItemId: string;
 }) => {
   try {
-    await apiFetch<Cart>(`/cart/items/${cartItemId}`, {
+    await apiFetch<Cart>(`/cart/items/${seg(cartItemId)}`, {
       method: "PATCH",
       body: { amount },
       auth: true,
@@ -281,7 +291,7 @@ export const updateCartItemAction = async ({ amount, cartItemId, }: {
 export const removeCartItemAction = async (prevState: any, formData: FormData) => {
   try {
     const cartItemId = formData.get("id") as string;
-    await apiFetch<Cart>(`/cart/items/${cartItemId}`, {
+    await apiFetch<Cart>(`/cart/items/${seg(cartItemId)}`, {
       method: "DELETE",
       auth: true,
     });
@@ -308,7 +318,7 @@ export const fetchFavoriteId = async (productId: string) => {
 
 export const toggleFavAction = async (prevState: { productId: string }) => {
   try {
-    await apiFetch<{ favorited: boolean }>(`/favorites/toggle/${prevState.productId}`, {
+    await apiFetch<{ favorited: boolean }>(`/favorites/toggle/${seg(prevState.productId)}`, {
       method: "POST",
       auth: true,
     });
@@ -339,7 +349,7 @@ export const createOrderAction = async (prevState: any, formData: FormData) => {
 
 export const payOrderAction = async (prevState: { orderId: string }) => {
   try {
-    await apiFetch<Order>(`/orders/${prevState.orderId}/pay`, {
+    await apiFetch<Order>(`/orders/${seg(prevState.orderId)}/pay`, {
       method: "POST",
       auth: true,
     });
@@ -379,7 +389,7 @@ export const createReviewAction = async (prevState: any, formData: FormData) => 
 };
 
 export const fetchProductReviews = async (productId: string) =>
-  apiFetch<Review[]>(`/reviews/product/${productId}`);
+  apiFetch<Review[]>(`/reviews/product/${seg(productId)}`);
 
 export const fetchUserReviews = async () =>
   apiFetch<Review[]>("/reviews/mine", { auth: true });
@@ -389,7 +399,7 @@ export const fetchAllReviews = async () =>
 
 export const deleteReviewAction = async (prevState: { reviewId: string }) => {
   try {
-    await apiFetch<null>(`/reviews/${prevState.reviewId}`, {
+    await apiFetch<null>(`/reviews/${seg(prevState.reviewId)}`, {
       method: "DELETE",
       auth: true,
     });
